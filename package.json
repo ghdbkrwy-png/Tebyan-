@@ -1,0 +1,9 @@
+{
+  "name": "tibyan-notebooklm-style",
+  "version": "1.0.0",
+  "private": true,
+  "description": "تِبيان — تطبيق يقرأ ملفات PDF ويلخصها ويحولها لشرائح وحوار صوتي عربي عبر Gemini API",
+  "engines": {
+    "node": ">=18"
+  }
+}

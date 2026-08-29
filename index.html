@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تِبيان — مساعدك لقراءة وتلخيص وسرد المستندات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Tajawal:wght@300;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 100 100"><path d="M50 5 L61 39 L97 39 L68 60 L79 95 L50 74 L21 95 L32 60 L3 39 L39 39 Z" stroke-width="3"/></svg>
+      تِبيان
+    </div>
+    <div class="source-label" id="sourceLabel">لا يوجد مصدر محمّل بعد</div>
+    <button class="btn" id="newSourceBtn">مصدر جديد</button>
+  </div>
+
+  <div class="layout">
+    <aside class="rail">
+      <button class="rail-btn active" data-panel="empty" id="railEmpty" title="الرئيسية">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>
+        <span>الرئيسية</span>
+      </button>
+      <button class="rail-btn" data-panel="overview" disabled title="نظرة عامة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span>نظرة عامة</span>
+      </button>
+      <button class="rail-btn" data-panel="summary" disabled title="ملخص">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4h9l5 5v11H6z"/><path d="M9 12h6M9 16h6"/></svg>
+        <span>ملخّص</span>
+      </button>
+      <button class="rail-btn" data-panel="chat" disabled title="محادثة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 20l1-5A8.5 8.5 0 1 1 21 11.5z"/></svg>
+        <span>محادثة</span>
+      </button>
+      <button class="rail-btn" data-panel="study" disabled title="دليل الدراسة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 6a9 9 0 0 1 8-2v13a9 9 0 0 0-8 2 9 9 0 0 0-8-2V4a9 9 0 0 1 8 2z"/></svg>
+        <span>دليل الدراسة</span>
+      </button>
+      <button class="rail-btn" data-panel="slides" disabled title="شرائح">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 5h18v12H3z"/><path d="M9 21h6M12 17v4"/></svg>
+        <span>شرائح</span>
+      </button>
+      <button class="rail-btn" data-panel="audio" disabled title="نظرة صوتية">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 9.5v5l4.5-2.5z"/></svg>
+        <span>نظرة صوتية</span>
+      </button>
+    </aside>
+
+    <main class="workspace">
+
+      <!-- EMPTY / WELCOME -->
+      <section class="panel active" id="panel-empty">
+        <div class="welcome">
+          <svg class="mark" viewBox="0 0 100 100"><path d="M50 5 L61 39 L97 39 L68 60 L79 95 L50 74 L21 95 L32 60 L3 39 L39 39 Z" stroke-width="2.5"/></svg>
+          <h1>ارفع مستندًا لتبدأ</h1>
+          <p>يقرأ تِبيان ملف PDF كاملًا، ثم يتيح لك تلخيصه، محادثته، توليد دليل دراسة منه، تحويله لشرائح مشروحة، أو الاستماع لنظرة عامة صوتية بحوار بين مذيعَين — كل ذلك عبر Gemini API.</p>
+          <div class="dropzone" id="dropzone">
+            <strong>اسحب ملف PDF هنا أو اضغط للاختيار</strong>
+            سيبقى الملف في متصفحك ولا يُرسل إلا إلى Gemini عند الطلب
+          </div>
+          <input type="file" id="fileInput" accept="application/pdf" style="display:none">
+          <div class="status-line" id="uploadStatus"></div>
+        </div>
+      </section>
+
+      <!-- OVERVIEW -->
+      <section class="panel" id="panel-overview">
+        <div class="panel-head">
+          <h2>نظرة عامة</h2>
+          <p>عنوان المستند ومحاوره الرئيسية كما استخلصها Gemini.</p>
+        </div>
+        <div class="card" id="overviewCard">
+          <div class="status-line" id="overviewStatus"></div>
+        </div>
+      </section>
+
+      <!-- SUMMARY -->
+      <section class="panel" id="panel-summary">
+        <div class="panel-head">
+          <h2>الملخّص</h2>
+          <p>استخرج أهم أفكار المستند بالمستوى الذي تريده.</p>
+        </div>
+        <div class="card">
+          <div class="row" style="justify-content:space-between;">
+            <select id="summaryLevel" style="max-width:220px;">
+              <option value="short">مختصر جدًا</option>
+              <option value="balanced" selected>متوازن</option>
+              <option value="detailed">تفصيلي</option>
+            </select>
+            <button class="btn solid" id="summarizeBtn">توليد الملخّص</button>
+          </div>
+          <div class="status-line" id="summaryStatus"></div>
+        </div>
+        <div class="card" id="summaryResultCard" style="display:none;">
+          <h3>النقاط الرئيسية</h3>
+          <ul class="summary-list" id="summaryList"></ul>
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section class="panel" id="panel-chat">
+        <div class="panel-head">
+          <h2>محادثة مع المستند</h2>
+          <p>اسأل أي سؤال، والإجابة ستكون مستندة حصريًا لمحتوى الملف.</p>
+        </div>
+        <div class="card chat-box">
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chatInput" placeholder="اكتب سؤالك هنا...">
+            <button class="btn solid" id="chatSendBtn">إرسال</button>
+          </div>
+          <div class="status-line" id="chatStatus"></div>
+        </div>
+      </section>
+
+      <!-- STUDY GUIDE -->
+      <section class="panel" id="panel-study">
+        <div class="panel-head">
+          <h2>دليل الدراسة</h2>
+          <p>مصطلحات رئيسية، أسئلة شائعة، واختبار قصير مبني على المستند.</p>
+        </div>
+        <div class="card">
+          <button class="btn solid" id="studyBtn">توليد دليل الدراسة</button>
+          <div class="status-line" id="studyStatus"></div>
+        </div>
+        <div id="studyResult" style="display:none;">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="terms">المصطلحات</button>
+            <button class="tab-btn" data-tab="faq">أسئلة شائعة</button>
+            <button class="tab-btn" data-tab="quiz">اختبار قصير</button>
+          </div>
+          <div class="card tab-content active" id="tab-terms"></div>
+          <div class="card tab-content" id="tab-faq"></div>
+          <div class="card tab-content" id="tab-quiz"></div>
+        </div>
+      </section>
+
+      <!-- SLIDES -->
+      <section class="panel" id="panel-slides">
+        <div class="panel-head">
+          <h2>شرائح مشروحة</h2>
+          <p>تحويل الملخّص إلى شرائح، مع سرد صوتي عربي لكل شريحة.</p>
+        </div>
+        <div class="card">
+          <button class="btn solid" id="buildSlidesBtn">توليد الشرائح من الملخّص</button>
+          <p class="status-line" style="margin-top:8px;">يتطلب توليد الملخّص أولًا من تبويب «ملخّص».</p>
+          <div class="status-line" id="slidesStatus"></div>
+        </div>
+        <div class="card" id="slideViewer" style="display:none;">
+          <div class="slide-stage">
+            <h4 id="slideTitle">—</h4>
+            <p id="slideContent">—</p>
+          </div>
+          <div class="slide-controls">
+            <button class="icon-btn" id="prevBtn" title="السابقة">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="icon-btn play" id="playBtn" title="استماع">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button class="icon-btn" id="nextBtn" title="التالية">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="dots" id="dots"></div>
+          <div class="status-line" id="narrationStatus" style="text-align:center;"></div>
+        </div>
+      </section>
+
+      <!-- AUDIO OVERVIEW -->
+      <section class="panel" id="panel-audio">
+        <div class="panel-head">
+          <h2>نظرة عامة صوتية</h2>
+          <p>حوار قصير بين مذيعَين يناقشان أهم ما جاء في المستند — أشبه ببودكاست.</p>
+        </div>
+        <div class="card">
+          <button class="btn solid" id="audioOverviewBtn">توليد النظرة الصوتية</button>
+          <div class="status-line" id="audioStatus"></div>
+        </div>
+        <div class="card" id="audioResultCard" style="display:none;">
+          <h3>الحوار الصوتي</h3>
+          <audio id="audioPlayer" controls></audio>
+          <h3 style="margin-top:22px;">النص الكامل</h3>
+          <div class="transcript-box" id="transcriptBox"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
